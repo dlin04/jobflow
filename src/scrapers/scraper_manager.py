@@ -3,6 +3,7 @@ from src.database.database import Database
 from src.database.models import Job
 from src.scrapers.base_scraper import BaseScraper
 from src.scrapers.simplify_scraper import SimplifyScraper
+from src.scrapers.yc_scraper import YCScraper
 
 
 class ScraperManager:
@@ -13,7 +14,7 @@ class ScraperManager:
 
     def _register_scrapers(self):
         self.scrapers.append(SimplifyScraper(self.db))
-        # add more scrapers later on
+        self.scrapers.append(YCScraper(self.db))
 
     def run(self) -> list[Job]:
         all_jobs: list[Job] = []
