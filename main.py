@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    filename="jobflow.log",
+    filename="data/jobflow.log",
 )
 
 load_dotenv()
@@ -36,7 +36,7 @@ manager = ScraperManager(db)
 @tasks.loop(hours=8)
 async def scrape_jobs():
     logging.info("Starting scheduled scrape...")
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     new_jobs = await loop.run_in_executor(None, manager.run)
     if not new_jobs:
@@ -54,7 +54,6 @@ async def scrape_jobs():
         )
         embed.add_field(name="Company", value=job.company, inline=True)
         embed.add_field(name="Location", value=job.location or "N/A", inline=True)
-        embed.set_footer(text="via SimplifyJobs")
 
         if job.job_type == "intern" and isinstance(intern_channel, Messageable):
             await intern_channel.send(embed=embed)

@@ -43,17 +43,11 @@ class Database:
 
         try:
             cur.execute(
-                "SELECT 1 FROM jobs WHERE application_url = ?", (job.application_url,)
-            )
-            if cur.fetchone() is not None:
-                return False 
-
-            cur.execute(
-                "INSERT INTO jobs (title, company, job_type, application_url, location) VALUES (?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO jobs (title, company, job_type, application_url, location) VALUES (?, ?, ?, ?, ?)",
                 (job.title, job.company, job.job_type, job.application_url, job.location),
             )
             con.commit()
-            return True 
+            return cur.rowcount > 0
         except sqlite3.Error as e:
             logging.error(f"Database insert failed: {e}")
             return False
