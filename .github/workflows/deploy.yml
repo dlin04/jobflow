@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/jobflow:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/jobflow:latest
+            docker stop jobflow || true
+            docker rm jobflow || true
+            docker run -d \
+              --name jobflow \
+              --restart unless-stopped \
+              -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} \
+              -e INTERN_CHANNEL_ID=${{ secrets.INTERN_CHANNEL_ID }} \
+              -e NEW_GRAD_CHANNEL_ID=${{ secrets.NEW_GRAD_CHANNEL_ID }} \
+              -v jobflow-data:/app/data \
+              ${{ secrets.DOCKERHUB_USERNAME }}/jobflow:latest
